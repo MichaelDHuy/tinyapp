@@ -51,6 +51,11 @@ app.get("/hello", (req, res) => {
   res.render("hello_world", templateVars);
 });
 
+app.post("/urls/:id/delete", (req, res) => {
+  const shortURL = req.params.id;
+  delete urlDatabase[shortURL];
+  res.redirect("/urls");
+});
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
 });
