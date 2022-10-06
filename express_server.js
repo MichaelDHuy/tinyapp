@@ -80,12 +80,12 @@ app.post("/login", (req, res) => {
     return res.status(400).send('Please include email AND password!');
   }
   if (!user) {
-    return res.status(400).send('An account with that email does not exist!');
+    return res.status(403).send('An account with that email does not exist!');
   }
-  if (user && user.password !== passwordpassword) {
-    return res.status(400).send('The password you entered is incorrect!')
+  if (user && user.password !== password) {
+    return res.status(403).send('The password you entered is incorrect!')
   }
-  res.cookie("user_id", id);
+  res.cookie("user_id", user.id);
   res.redirect("/urls");
 })
 
@@ -108,10 +108,10 @@ app.post("/register", (req, res) => {
   console.log(getUserByEmail(email));
   const emailExisted =  getUserByEmail(email);
   if (email === "" || password === "") {
-    return res.status(400).send('Please include email AND password');
+    return res.status(403).send('Please include email AND password');
   }
   else if (!emailExisted) {
-    return res.status(400).send('Email is already in use');
+    return res.status(403).send('Email is already in use');
   }
   // After adding the user, set a user_id cookie containing the user's newly generated ID.
   // Test that the users object is properly being appended to. You can insert a console.log

@@ -22,30 +22,28 @@
     <%- include('partials/_header') %>
 
     <main style="margin: 1em;">
-      
-      <h3>REGISTER</h3>
-
-  <p>Been here before? Please <a href="/login">LOG IN</a> instead!</p>
-    <form class="form-inline" action="/register" method="POST">
-    <div class="form-group mb-2"></div>
-    <label>Email Address:</label>
-    <input 
-    class="form-control"
-    type="text"
-    name="email" />
-    <br/>
-
-    <label for="password">Password:</label>
-    <input
-    class="form-control"
-    type="text"
-    name="password"
-    />
-    <button type="submit" class="btn btn-primary">Register</button>
-    <br/>
-  </div>
-  </form>
-  </main>
+      <h3>Create Account</h3>
+      <p>Been here before? Please <a href="/login">LOG IN</a> instead!</p>
+      <form class="form-inline" action="/register" method="POST">
+        <div class="form-group mb-2">
+          <label for="email">Email Address:</label>
+          <input
+            class="form-control"
+            type="text"
+            name="email"
+            style="width: 300px; margin: 1em"
+          />
+          <label for="password">Password:</label>
+          <input
+          class="form-control"
+          type="text"
+          name="password"
+          style="width: 300px; margin: 1em"
+          />
+          <button type="submit" class="btn btn-primary">Create Account</button>
+        </div>
+      </form>
+    </main>
     <!-- Bootstrap JS -->
     <script
       src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
