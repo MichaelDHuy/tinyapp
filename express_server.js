@@ -29,6 +29,16 @@ const cookieLookup = (userIDCookie) => {
   }
 };
 
+const getUserByEmail = (mail) => {
+  for (let user in users) {
+    if(users[user].email === mail) {
+      return users[user];
+    }
+  }
+  return false;
+};
+
+
 const users = {
   userRandomID: {
     id: "userRandomID",
@@ -82,9 +92,18 @@ app.post("/register", (req, res) => {
     email,
     password
   };
+  console.log(email);
+  console.log(getUserByEmail(email));
+  const emailExisted =  getUserByEmail(email);
+  if (email === "" || password === "") {
+    return res.status(400).send('Please include email AND password');
+  }
+  else if (!emailExisted) {
+    return res.status(400).send('Email is already in use');
+  }
   // After adding the user, set a user_id cookie containing the user's newly generated ID.
   // Test that the users object is properly being appended to. You can insert a console.log
-  res.cookie('user_id', id);
+  res.cookie("user_id", id);
   res.redirect('/urls');
 })
 
