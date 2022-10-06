@@ -21,13 +21,13 @@ const urlDatabase = {
   "9sm5xK": "http://www.google.com"
 };
 // const users = {};
-const cookieLookup = (userIDCookie) => {
-  for (let user in users) {
-    if (userIDCookie === user) {
-      return users[user];
-    }
-  }
-};
+// const cookieLookup = (userIDCookie) => {
+//   for (let user in users) {
+//     if (userIDCookie === user) {
+//       return users[user];
+//     }
+//   }
+// };
 
 const getUserByEmail = (mail) => {
   for (let user in users) {
@@ -35,7 +35,7 @@ const getUserByEmail = (mail) => {
       return users[user];
     }
   }
-  return false;
+  return null;
 };
 
 
@@ -72,12 +72,24 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect(`/urls/${id}`);
 });
 
-app.post("/urls/login", (req, res) => {
-  res.cookie("user_id", req.body.user_id)
+app.post("/login", (req, res) => {
+  const email = req.body.email;
+  const password = req.body.password;
+  const user = getUserByEmail(email)
+  if (!email || !password) {
+    return res.status(400).send('Please include email AND password!');
+  }
+  if (!user) {
+    return res.status(400).send('An account with that email does not exist!');
+  }
+  if (user && user.password !== passwordpassword) {
+    return res.status(400).send('The password you entered is incorrect!')
+  }
+  res.cookie("user_id", id);
   res.redirect("/urls");
 })
 
-app.post("/urls/logout", (req, res) => {
+app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
   res.redirect("/urls");
 })
@@ -139,9 +151,16 @@ app.get("/urls/:id", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: cookieLookup(req.cookies["user_id"])
+    user: users[req.cookies["user_id"]]
   };
   res.render("urls_register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  const templateVars = {
+    user: users[req.cookies["user_id"]]
+  };
+  res.render("urls_login", templateVars);
 });
 
 app.get("/", (req, res) => {
