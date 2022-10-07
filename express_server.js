@@ -15,11 +15,20 @@ const generateRandomString = function() {
   }
   return randomString;
 };
-
 const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+  b6UTxQ: {
+    longURL: "https://www.tsn.ca",
+    userID: "aJ48lW",
+  },
+  i3BoGr: {
+    longURL: "https://www.google.ca",
+    userID: "aJ48lW",
+  },
 };
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
+// };
 // const users = {};
 // const cookieLookup = (userIDCookie) => {
 //   for (let user in users) {
@@ -28,16 +37,6 @@ const urlDatabase = {
 //     }
 //   }
 // };
-
-const getUserByEmail = (mail) => {
-  for (let user in users) {
-    if(users[user].email === mail) {
-      return users[user];
-    }
-  }
-  return null;
-};
-
 
 const users = {
   userRandomID: {
@@ -52,15 +51,32 @@ const users = {
   },
 };
 
+const getUserByEmail = (mail) => {
+  for (let user in users) {
+    if(users[user].email === mail) {
+      return users[user];
+    }
+  }
+  return null;
+};
+
+const urlsForUser = (id) => {
+  let userURLS = {};
+  for (let url in urlDatabase) {
+    if (id === urlDatabase[url].userID) {
+      userURLS[url] =urlDatabase[url]
+    }
+  }
+  return userURLS;
+};
+
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
     res.send("Please log in or register to create a new URL!");
     return;
   }
   let shortURL = generateRandomString();
-  console.log(req.body); // Log the POST request body to the console
-  res.send("Ok"); // Respond with 'Ok' (we will replace this)
-  urlDatabase[shortURL] = req.body.longURL;
+  urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.cookies["user_id"]};
   res.redirect(`/urls/${shortURL}`);
   return;
 });
@@ -81,7 +97,7 @@ app.post("/urls/:id/update", (req, res) => {
     return;
   }
   const id = req.params.id;
-  urlDatabase[id] = req.body.update;
+  urlDatabase[id].longURL = req.body.update;
   res.redirect(`/urls/${id}`);
 });
 
@@ -111,41 +127,45 @@ app.post("/register", (req, res) => {
   // create a new user object
   const email = req.body.email;
   const password = req.body.password;
-  const id = generateRandomString();
-  users[id] = {
-    id,
-    email,
-    password
-  };
-  console.log(email);
-  console.log(getUserByEmail(email));
+
   const emailExisted =  getUserByEmail(email);
   if (email === "" || password === "") {
     return res.status(403).send('Please include email AND password');
   }
-  else if (!emailExisted) {
+  if (emailExisted) {
     return res.status(403).send('Email is already in use');
   }
+  const id = generateRandomString();
+  const user = {
+    id,
+    email,
+    password
+  };
+  users[id] = user;
+  console.log(users);
   // After adding the user, set a user_id cookie containing the user's newly generated ID.
   // Test that the users object is properly being appended to. You can insert a console.log
-  res.cookie("user_id", id);
+  res.cookie("user_id", user.id);
   res.redirect('/urls');
 })
 
 app.get("/u/:id", (req, res) => {
   for (let url in urlDatabase) {
     if (req.params.id === url) {
-      const longURL = urlDatabase[req.params.id];
+      const longURL = urlDatabase[req.params.id].longURL;
       res.redirect(longURL);
       return;
     }
-  }
-  res.send("ID does not exist. Please try again!");
+  };
+    res.send("ID does not exist. Please try again!");
 });
 
 app.get("/urls", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.status(401).send("Please log in to continue!");
+  }
   const templateVars = {
-    urls: urlDatabase,
+    urls: urlsForUser(req.cookies["user_id"]),
     user: users[req.cookies["user_id"]]
   };
   res.render("urls_index", templateVars);
@@ -159,9 +179,16 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:id", (req, res) => {
+  if (!req.cookies["user_id"]) {
+    return res.status(401).send("Please log in to continue!");
+  }
+  let permittedView = urlsForUser(req.cookies["user_id"]);
+  if (!permittedView) {
+    return res.status(401).send("Sorry! You do not have permission to view this URL!");
+  }
   const templateVars = { 
     id: req.params.id, 
-    longURL: urlDatabase[`${req.params.id}`],
+    longURL: urlDatabase[`${req.params.id}`].longURL,
     user: users[req.cookies["user_id"]]
   };
   res.render("urls_show", templateVars);
