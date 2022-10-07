@@ -1,11 +1,10 @@
 const express = require("express");
 const app = express();
 const bcrypt = require("bcryptjs");
-// const cookieParser = require('cookie-parser');
 cookieSession = require('cookie-session')
 const PORT = 8080; // default port 8080
+const getUserByEmail = require('./helpers.js')
 app.use(express.urlencoded({ extended: true }));
-// app.use(cookieParser());
 app.set("view engine", "ejs");
 app.use(cookieSession({
   name: 'user_id',
@@ -46,14 +45,14 @@ const users = {
   },
 };
 
-const getUserByEmail = (mail) => {
-  for (let user in users) {
-    if(users[user].email === mail) {
-      return users[user];
-    }
-  }
-  return null;
-};
+// const getUserByEmail = (mail) => {
+//   for (let user in users) {
+//     if(users[user].email === mail) {
+//       return users[user];
+//     }
+//   }
+//   return null;
+// };
 
 const urlsForUser = (id) => {
   let userURLS = {};
@@ -99,7 +98,7 @@ app.post("/urls/:id/update", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email);
+  const user = getUserByEmail(email, users);
   
   if (!email || !password) {
     return res.status(400).send("<html><body>Please include email AND password. <a href=/login>Try Again</a>!</body></html>");
@@ -125,7 +124,7 @@ app.post("/register", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   const hashedPassword = bcrypt.hashSync(password, 10);
-  const emailExisted =  getUserByEmail(email);
+  const emailExisted =  getUserByEmail(email, users);
   if (email === "" || password === "") {
     return res.status(403).send("<html><body>Please include email AND password. <a href=/register>Try Again</a>)!</body></html>");
   }
