@@ -91,8 +91,10 @@ app.post("/urls/:id/update", (req, res) => {
     return;
   }
   const id = req.params.id;
-  urlDatabase[id].longURL = req.body.update;
-  res.redirect(`/urls/${id}`);
+  console.log('req.body', req.body);
+  urlDatabase[id].longURL = req.body.urlupdate;
+  console.log('url databe update', urlDatabase)
+  res.redirect(`/urls`);
 });
 
 app.post("/login", (req, res) => {
@@ -161,6 +163,7 @@ app.get("/urls", (req, res) => {
     urls: urlsForUser(req.session.user_id),
     user: users[req.session.user_id]
   };
+  console.log('urlsforuser', urlsForUser(req.session.user_id));
   res.render("urls_index", templateVars);
 });
 
