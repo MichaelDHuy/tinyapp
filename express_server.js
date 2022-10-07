@@ -1,6 +1,7 @@
 const express = require("express");
 const app = express();
-const cookieParser = require('cookie-parser')
+const bcrypt = require("bcryptjs");
+const cookieParser = require('cookie-parser');
 const PORT = 8080; // default port 8080
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
@@ -42,12 +43,12 @@ const users = {
   userRandomID: {
     id: "userRandomID",
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "1234",
   },
   user2RandomID: {
     id: "user2RandomID",
     email: "user2@example.com",
-    password: "dishwasher-funk",
+    password: "5678",
   },
 };
 
@@ -72,7 +73,7 @@ const urlsForUser = (id) => {
 
 app.post("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
-    res.send("Please log in or register to create a new URL!");
+    res.send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
     return;
   }
   let shortURL = generateRandomString();
@@ -83,7 +84,7 @@ app.post("/urls", (req, res) => {
 
 app.post("/urls/:id/delete", (req, res) => {
   if (!req.cookies["user_id"]) {
-    res.send("Please log in or register to delete a URL!");
+    res.send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to delete a URL.</body></html>");
     return;
   }
   const id = req.params.id;
@@ -93,7 +94,7 @@ app.post("/urls/:id/delete", (req, res) => {
 
 app.post("/urls/:id/update", (req, res) => {
   if (!req.cookies["user_id"]) {
-    res.send("Please log in or register to update a URL!");
+    res.send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to update a URL.</body></html>");
     return;
   }
   const id = req.params.id;
@@ -104,15 +105,16 @@ app.post("/urls/:id/update", (req, res) => {
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
-  const user = getUserByEmail(email)
+  const user = getUserByEmail(email);
+  const comparePassword = bcrypt.compareSync(password, user.password);
   if (!email || !password) {
-    return res.status(400).send('Please include email AND password!');
+    return res.status(400).send("<html><body>Please include email AND password. <a href=/login>Try Again</a>!</body></html>");
   }
   if (!user) {
-    return res.status(403).send('An account with that email does not exist!');
+    return res.status(403).send("<html><body>An account with that email does not exist! Please <a href=/login>Try Again</a>!</body></html> ");
   }
-  if (user && user.password !== password) {
-    return res.status(403).send('The password you entered is incorrect!')
+  if (user && !comparePassword) {
+    return res.status(403).send("<html><body>The password you entered is incorrect! Please <a href=/login>Try Again</a>!</body></html>");
   }
   res.cookie("user_id", user.id);
   res.redirect("/urls");
@@ -120,32 +122,29 @@ app.post("/login", (req, res) => {
 
 app.post("/logout", (req, res) => {
   res.clearCookie("user_id");
-  res.redirect("/urls");
+  res.redirect("/login");
 })
 
 app.post("/register", (req, res) => {
-  // create a new user object
+  const id = generateRandomString();
   const email = req.body.email;
   const password = req.body.password;
-
+  const hashedPassword = bcrypt.hashSync(password, 10);
   const emailExisted =  getUserByEmail(email);
   if (email === "" || password === "") {
-    return res.status(403).send('Please include email AND password');
+    return res.status(403).send("<html><body>Please include email AND password. <a href=/register>Try Again</a>)!</body></html>");
   }
   if (emailExisted) {
-    return res.status(403).send('Email is already in use');
+    return res.status(403).send("<html><body>Email is already in use. Please <a href=/register>Try Again</a>)!</body></html>");
   }
-  const id = generateRandomString();
-  const user = {
+  users[id] = {
     id,
     email,
-    password
+    password: hashedPassword
   };
-  users[id] = user;
+  // users[id] = user;
   console.log(users);
-  // After adding the user, set a user_id cookie containing the user's newly generated ID.
-  // Test that the users object is properly being appended to. You can insert a console.log
-  res.cookie("user_id", user.id);
+  res.cookie("user_id", id);
   res.redirect('/urls');
 })
 
@@ -162,7 +161,7 @@ app.get("/u/:id", (req, res) => {
 
 app.get("/urls", (req, res) => {
   if (!req.cookies["user_id"]) {
-    return res.status(401).send("Please log in to continue!");
+    return res.status(401).send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
   }
   const templateVars = {
     urls: urlsForUser(req.cookies["user_id"]),
@@ -180,11 +179,11 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:id", (req, res) => {
   if (!req.cookies["user_id"]) {
-    return res.status(401).send("Please log in to continue!");
+    return res.status(401).send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
   }
   let permittedView = urlsForUser(req.cookies["user_id"]);
   if (!permittedView) {
-    return res.status(401).send("Sorry! You do not have permission to view this URL!");
+    return res.status(401).send("<html><body>Sorry! You do not have permission to view this URL! Please <a href=/login>Log In</a> or <a href=/register>Register</a>.</body></html>");
   }
   const templateVars = { 
     id: req.params.id, 
