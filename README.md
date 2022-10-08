@@ -5,8 +5,9 @@ P/s: This is the super-lite-tiny app made by an Lighthouse-labber Michael-Huy
 
 ## Final Product
 
-!["screenshot description"](#)
-!["screenshot description"](#)
+!["Main page"](https://github.com/MichaelDHuy/tinyapp/blob/master/docs/urls-page.png?raw=true)
+!["Create new URL page"](https://github.com/MichaelDHuy/tinyapp/blob/master/docs/urls-new-page.png?raw=true)
+
 
 ## Dependencies
 
