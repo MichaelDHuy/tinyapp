@@ -2,7 +2,7 @@ const express = require("express");
 const app = express();
 const bcrypt = require("bcryptjs");
 cookieSession = require('cookie-session')
-const PORT = 8080; // default port 8080
+const PORT = 8080;
 const getUserByEmail = require('./helpers.js')
 app.use(express.urlencoded({ extended: true }));
 app.set("view engine", "ejs");
@@ -44,15 +44,6 @@ const users = {
     password: "5678",
   },
 };
-
-// const getUserByEmail = (mail) => {
-//   for (let user in users) {
-//     if(users[user].email === mail) {
-//       return users[user];
-//     }
-//   }
-//   return null;
-// };
 
 const urlsForUser = (id) => {
   let userURLS = {};
@@ -138,7 +129,6 @@ app.post("/register", (req, res) => {
     email,
     password: hashedPassword
   };
-  // users[id] = user;
   console.log(users);
   req.session.user_id = id;
   res.redirect('/urls');
