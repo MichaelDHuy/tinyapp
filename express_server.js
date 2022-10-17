@@ -21,6 +21,7 @@ const generateRandomString = function() {
   }
   return randomString;
 };
+
 const urlDatabase = {
   b6UTxQ: {
     longURL: "https://www.tsn.ca",
@@ -55,6 +56,17 @@ const urlsForUser = (id) => {
   return userURLS;
 };
 
+app.get("/urls", (req, res) => {
+  if (!req.session.user_id) {
+    return res.status(401).send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
+  }
+  const templateVars = {
+    urls: urlsForUser(req.session.user_id),
+    user: users[req.session.user_id]
+  };
+  console.log('urlsforuser', urlsForUser(req.session.user_id));
+  res.render("urls_index", templateVars);
+});
 app.post("/urls", (req, res) => {
   if (!req.session.user_id) {
     res.send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
@@ -64,6 +76,17 @@ app.post("/urls", (req, res) => {
   urlDatabase[shortURL] = {longURL: req.body.longURL, userID: req.session.user_id};
   res.redirect(`/urls/${shortURL}`);
   return;
+});
+
+app.get("/u/:id", (req, res) => {
+  for (let url in urlDatabase) {
+    if (req.params.id === url) {
+      const longURL = urlDatabase[req.params.id].longURL;
+      res.redirect(longURL);
+      return;
+    }
+  };
+    res.send("ID does not exist. Please try again!");
 });
 
 app.post("/urls/:id/delete", (req, res) => {
@@ -76,6 +99,33 @@ app.post("/urls/:id/delete", (req, res) => {
   res.redirect("/urls");
 });
 
+app.get("/urls/new", (req, res) => {
+  if (!req.session.user_id) {
+    res.redirect("/login");
+  }
+  const templateVars = { 
+    user: users[req.session.user_id]
+  }; 
+  res.render("urls_new", templateVars);
+});
+app.get("/urls/:id", (req, res) => {
+  if (!req.session.user_id) {
+    return res.status(401).send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
+  }
+  if (req.session.user_id !== urlDatabase[`${req.params.id}`].userID) {
+    return res.status(401).send("<html><body>You  not own this URL! Please <a href=/urls/new>Create your own url</a> here to continue!</body></html>");
+  }
+  let permittedView = urlsForUser(req.session.user_id);
+  if (!permittedView) {
+    return res.status(401).send("<html><body>Sorry! You do not have permission to view this URL! Please <a href=/login>Log In</a> or <a href=/register>Register</a>.</body></html>");
+  }
+  const templateVars = { 
+    id: req.params.id, 
+    longURL: urlDatabase[`${req.params.id}`].longURL,
+    user: users[req.session.user_id]
+  };
+  res.render("urls_show", templateVars);
+});
 app.post("/urls/:id/update", (req, res) => {
   if (!req.session.user_id) {
     res.send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to update a URL.</body></html>");
@@ -88,6 +138,15 @@ app.post("/urls/:id/update", (req, res) => {
   res.redirect(`/urls`);
 });
 
+app.get("/login", (req, res) => {
+  if (req.session.user_id) {
+    return res.redirect('/urls');
+  }
+  const templateVars = {
+    user: users[req.session.user_id]
+  };
+  res.render("urls_login", templateVars);
+});
 app.post("/login", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
@@ -108,10 +167,22 @@ app.post("/login", (req, res) => {
 })
 
 app.post("/logout", (req, res) => {
+  console.log(req.session)
   req.session.user_id = null;
+  req.session = null; 
+  console.log(req.session);
   res.redirect("/login");
 })
 
+app.get("/register", (req, res) => {
+  if (req.session.user_id) {
+    return res.redirect('/urls');
+  }
+  const templateVars = {
+    user: users[req.session.user_id]
+  };
+  res.render("urls_register", templateVars);
+});
 app.post("/register", (req, res) => {
   const id = generateRandomString();
   const email = req.body.email;
@@ -133,72 +204,6 @@ app.post("/register", (req, res) => {
   req.session.user_id = id;
   res.redirect('/urls');
 })
-
-app.get("/u/:id", (req, res) => {
-  for (let url in urlDatabase) {
-    if (req.params.id === url) {
-      const longURL = urlDatabase[req.params.id].longURL;
-      res.redirect(longURL);
-      return;
-    }
-  };
-    res.send("ID does not exist. Please try again!");
-});
-
-app.get("/urls", (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(401).send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
-  }
-  const templateVars = {
-    urls: urlsForUser(req.session.user_id),
-    user: users[req.session.user_id]
-  };
-  console.log('urlsforuser', urlsForUser(req.session.user_id));
-  res.render("urls_index", templateVars);
-});
-
-app.get("/urls/new", (req, res) => {
-  const templateVars = { 
-    user: users[req.session.user_id]
-  }; 
-  res.render("urls_new", templateVars);
-});
-
-app.get("/urls/:id", (req, res) => {
-  if (!req.session.user_id) {
-    return res.status(401).send("<html><body>Please <a href=/login>Log In</a> or <a href=/register>Register</a> to create a URL.</body></html>");
-  }
-  let permittedView = urlsForUser(req.session.user_id);
-  if (!permittedView) {
-    return res.status(401).send("<html><body>Sorry! You do not have permission to view this URL! Please <a href=/login>Log In</a> or <a href=/register>Register</a>.</body></html>");
-  }
-  const templateVars = { 
-    id: req.params.id, 
-    longURL: urlDatabase[`${req.params.id}`].longURL,
-    user: users[req.session.user_id]
-  };
-  res.render("urls_show", templateVars);
-});
-
-app.get("/register", (req, res) => {
-  if (req.session.user_id) {
-    return res.redirect('/urls');
-  }
-  const templateVars = {
-    user: users[req.session.user_id]
-  };
-  res.render("urls_register", templateVars);
-});
-
-app.get("/login", (req, res) => {
-  if (req.session.user_id) {
-    return res.redirect('/urls');
-  }
-  const templateVars = {
-    user: users[req.session.user_id]
-  };
-  res.render("urls_login", templateVars);
-});
 
 app.get("/", (req, res) => {
   res.redirect("/urls");
